@@ -815,7 +815,7 @@ async function runAIBreakdown(){
       method:'POST',
       headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
       body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',
+        model:'claude-sonnet-4-5',
         max_tokens:800,
         system:'You are a task management assistant. Break down the given task into 3-6 concrete actionable subtasks. Return ONLY a valid JSON array where each object has "title" (string) and "time" (number, hours as decimal like 0.5 or 1). No markdown, no explanation.',
         messages:[{role:'user',content:`Break down: "${title}"`}]
