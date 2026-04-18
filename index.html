@@ -822,6 +822,11 @@ async function runAIBreakdown(){
       })
     });
     const data = await resp.json();
+    if(!resp.ok){
+      const errMsg = data?.error?.message || `HTTP ${resp.status}`;
+      res.innerHTML = `<div style="color:var(--red);font-size:13px;padding:10px 0">API error: ${esc(errMsg)}</div>`;
+      return;
+    }
     const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
     pendingSubtasks = JSON.parse(text);
     res.innerHTML = `<div class="ai-result">
@@ -834,7 +839,7 @@ async function runAIBreakdown(){
       <button class="btn-use-subtasks" id="acceptBtn" onclick="toggleAcceptSubtasks(this)">Add subtasks when saving</button>
     </div>`;
   }catch(e){
-    res.innerHTML = `<div style="color:var(--red);font-size:13px;padding:10px 0">Could not generate subtasks. Check your API key.</div>`;
+    res.innerHTML = `<div style="color:var(--red);font-size:13px;padding:10px 0">Error: ${esc(e.message)}. Check your API key and browser console for details.</div>`;
   }
 }
 
