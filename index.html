@@ -131,6 +131,8 @@ h1,h2,h3{font-family:'DM Serif Display',serif}
 .btn-cancel{padding:9px 18px;border:1px solid var(--border);border-radius:var(--radius);background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;color:var(--text)}
 .btn-delete{padding:9px 14px;border:1px solid var(--border);border-radius:var(--radius);background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;color:var(--red)}
 .btn-delete:hover{background:var(--red-light);border-color:var(--red)}
+.btn-duplicate{padding:9px 14px;border:1px solid var(--border);border-radius:var(--radius);background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;color:var(--blue)}
+.btn-duplicate:hover{background:var(--blue-light);border-color:var(--blue)}
 .btn-save{padding:9px 22px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer}
 .btn-save:hover{opacity:.88}
 
@@ -294,6 +296,7 @@ h1,h2,h3{font-family:'DM Serif Display',serif}
     <div class="footer-left">
       <button class="btn-cancel" onclick="closeModal()">Cancel</button>
       <button class="btn-delete" id="btnDelete" style="display:none" onclick="deleteCurrentTask()">Delete</button>
+      <button class="btn-duplicate" id="btnDuplicate" style="display:none" onclick="duplicateTask()">Duplicate</button>
     </div>
     <button class="btn-save" onclick="saveTask()">Save task</button>
   </div>
@@ -720,6 +723,7 @@ function openModal(task){
   document.getElementById('fLink').value = task?.link||'';
   document.getElementById('aiResult').innerHTML = '';
   document.getElementById('btnDelete').style.display = task ? 'block' : 'none';
+  document.getElementById('btnDuplicate').style.display = task ? 'block' : 'none';
   document.getElementById('taskModal').style.display = 'flex';
   setTimeout(()=>document.getElementById('fTitle').focus(), 100);
 }
@@ -770,6 +774,15 @@ function deleteCurrentTask(){
   if(!confirm('Delete this task?')) return;
   tasks=tasks.filter(t=>t.id!==editingId);
   closeModal(); render(); saveToDrive(); showToast('Task deleted');
+}
+
+function duplicateTask(){
+  if(!editingId) return;
+  const original = tasks.find(t=>t.id===editingId);
+  if(!original) return;
+  const copy = {...original, id:uid(), title:`${original.title} (copy)`, done:false, created:Date.now()};
+  tasks.unshift(copy);
+  closeModal(); render(); saveToDrive(); showToast('Task duplicated');
 }
 
 // --- AI breakdown ---
