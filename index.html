@@ -264,12 +264,13 @@ h1,h2,h3{font-family:'DM Serif Display',serif}
       <div class="form-group">
         <label class="form-label">Category</label>
         <select class="form-input" id="fCategory">
-          <option value="Work">Work</option>
-          <option value="Personal">Personal</option>
-          <option value="Strategic">Strategic</option>
           <option value="Admin">Admin</option>
-          <option value="Team">Team</option>
-          <option value="Other">Other</option>
+          <option value="Finance">Finance</option>
+          <option value="Presales">Presales</option>
+          <option value="Internal Project">Internal Project</option>
+          <option value="External Projects">External Projects</option>
+          <option value="Private">Private</option>
+          <option value="HR">HR</option>
         </select>
       </div>
     </div>
@@ -534,11 +535,11 @@ function setDriveStatus(state, label){
 function getSampleTasks(){
   const add = n=>{ const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; };
   return [
-    {id:uid(),title:'Review Q2 service portfolio proposals',priority:'high',category:'Strategic',due:add(1),time:2,note:'Focus on cloud and SAP sections',link:'',done:false,created:Date.now()},
-    {id:uid(),title:'Prepare leadership hiring shortlist',priority:'high',category:'Team',due:add(2),time:1.5,note:'Three candidates pending review',link:'',done:false,created:Date.now()-1000},
-    {id:uid(),title:'Update One Team / Connected Delivery status deck',priority:'medium',category:'Work',due:add(3),time:1,note:'EMEA and APAC delivery center updates',link:'',done:false,created:Date.now()-2000},
-    {id:uid(),title:'Review Smith+Nephew sprint progress',priority:'medium',category:'Work',due:add(0),time:0.5,note:'Vulnerability remediation sprint check',link:'',done:false,created:Date.now()-3000},
-    {id:uid(),title:'Cloud sales enablement training prep',priority:'low',category:'Work',due:add(5),time:2,note:'Update StefaniniGroup EMEA MES HCI deck',link:'',done:false,created:Date.now()-4000},
+    {id:uid(),title:'Review Q2 service portfolio proposals',priority:'high',category:'Presales',due:add(1),time:2,note:'Focus on cloud and SAP sections',link:'',done:false,created:Date.now()},
+    {id:uid(),title:'Prepare leadership hiring shortlist',priority:'high',category:'HR',due:add(2),time:1.5,note:'Three candidates pending review',link:'',done:false,created:Date.now()-1000},
+    {id:uid(),title:'Update One Team / Connected Delivery status deck',priority:'medium',category:'External Projects',due:add(3),time:1,note:'EMEA and APAC delivery center updates',link:'',done:false,created:Date.now()-2000},
+    {id:uid(),title:'Review Smith+Nephew sprint progress',priority:'medium',category:'External Projects',due:add(0),time:0.5,note:'Vulnerability remediation sprint check',link:'',done:false,created:Date.now()-3000},
+    {id:uid(),title:'Cloud sales enablement training prep',priority:'low',category:'External Projects',due:add(5),time:2,note:'Update StefaniniGroup EMEA MES HCI deck',link:'',done:false,created:Date.now()-4000},
   ];
 }
 
@@ -609,7 +610,7 @@ function renderTasks(){
     </select>
     <select class="ctrl-select" onchange="filterCat=this.value;render()">
       <option value="all" ${filterCat==='all'?'selected':''}>All categories</option>
-      ${['Work','Personal','Strategic','Admin','Team','Other'].map(c=>`<option value="${c}" ${filterCat===c?'selected':''}>${c}</option>`).join('')}
+      ${['Admin','Finance','Presales','Internal Project','External Projects','Private','HR'].map(c=>`<option value="${c}" ${filterCat===c?'selected':''}>${c}</option>`).join('')}
     </select>
   </div>`;
 
