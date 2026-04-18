@@ -284,6 +284,14 @@ h1,h2,h3{font-family:'DM Serif Display',serif}
       <label class="form-label">Document / Link</label>
       <input class="form-input" id="fLink" placeholder="https://...">
     </div>
+    <div class="form-group">
+      <label class="form-label">To be reviewed with</label>
+      <input class="form-input" id="fReviewWith" placeholder="e.g. Mihaela, Andreea">
+      <div class="review-check-wrap" id="reviewCheckWrap" style="display:none;margin-top:10px;align-items:center;gap:10px">
+        <input type="checkbox" id="fReviewDone" style="width:16px;height:16px;cursor:pointer;accent-color:var(--green)">
+        <label for="fReviewDone" style="font-size:13px;color:var(--text);cursor:pointer">Review completed</label>
+      </div>
+    </div>
     <div class="ai-section">
       <div class="ai-section-title">AI assistant</div>
       <button class="ai-btn" onclick="runAIBreakdown()">
@@ -652,6 +660,7 @@ function renderTasks(){
           </div>
           ${t.note?`<div class="task-note">📝 ${esc(t.note)}</div>`:''}
           ${t.link?`<a class="task-link" href="${esc(t.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 ${esc(t.link.replace(/^https?:\/\//,'').split('/')[0])}</a>`:''}
+          ${t.reviewWith?`<div class="task-note" style="color:${t.reviewDone?'var(--green)':'var(--amber)'}">👥 ${t.reviewDone?'✓ Reviewed with':'To review with'}: ${esc(t.reviewWith)}</div>`:''}
         </div>
         <div class="task-actions">
           <button class="icon-btn" onclick="event.stopPropagation();quickDelete('${t.id}')">✕</button>
@@ -721,6 +730,13 @@ function openModal(task){
   document.getElementById('fCategory').value = task?.category||'Work';
   document.getElementById('fNote').value = task?.note||'';
   document.getElementById('fLink').value = task?.link||'';
+  document.getElementById('fReviewWith').value = task?.reviewWith||'';
+  document.getElementById('fReviewDone').checked = task?.reviewDone||false;
+  const reviewWrap = document.getElementById('reviewCheckWrap');
+  reviewWrap.style.display = (task?.reviewWith) ? 'flex' : 'none';
+  document.getElementById('fReviewWith').addEventListener('input', function(){
+    reviewWrap.style.display = this.value.trim() ? 'flex' : 'none';
+  });
   document.getElementById('aiResult').innerHTML = '';
   document.getElementById('btnDelete').style.display = task ? 'block' : 'none';
   document.getElementById('btnDuplicate').style.display = task ? 'block' : 'none';
@@ -742,6 +758,8 @@ function saveTask(){
     category: document.getElementById('fCategory').value,
     note: document.getElementById('fNote').value.trim(),
     link: document.getElementById('fLink').value.trim(),
+    reviewWith: document.getElementById('fReviewWith').value.trim(),
+    reviewDone: document.getElementById('fReviewDone').checked,
     done: false
   };
   if(editingId){
