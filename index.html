@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Focus — Task Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F7F5F0;--surface:#FFFFFF;--surface2:#F0EDE6;--border:#E2DDD5;
+  --text:#1A1714;--muted:#7A7570;--accent:#C8521A;--accent-light:#FAEEE6;
+  --green:#2D7A5F;--green-light:#E8F5F0;--amber:#B87A1A;--amber-light:#FBF3E3;
+  --blue:#1A5F8A;--blue-light:#E5F0F8;--red:#A83232;--red-light:#FAEAEA;
+  --radius:10px;--shadow:0 1px 3px rgba(0,0,0,0.06),0 4px 12px rgba(0,0,0,0.04);
+}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);font-size:14px}
+h1,h2,h3{font-family:'DM Serif Display',serif}
+
+.app{max-width:960px;margin:0 auto;padding:0 20px 40px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:24px 0 18px;border-bottom:1px solid var(--border);margin-bottom:24px;gap:12px;flex-wrap:wrap}
+.logo{font-family:'DM Serif Display',serif;font-size:24px;color:var(--text);letter-spacing:-0.5px}
+.logo span{color:var(--accent)}
+.topbar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.drive-status{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;cursor:pointer;transition:border-color .15s}
+.drive-status:hover{border-color:#C8C0B4}
+.drive-dot{width:7px;height:7px;border-radius:50%;background:#ccc;flex-shrink:0}
+.drive-dot.connected{background:var(--green)}
+.drive-dot.syncing{background:var(--amber);animation:pulse 1s infinite}
+.drive-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;transition:box-shadow .15s}
+.stat:hover{box-shadow:var(--shadow)}
+.stat-num{font-family:'DM Serif Display',serif;font-size:26px;color:var(--text);line-height:1}
+.stat-label{font-size:11px;color:var(--muted);margin-top:4px;text-transform:uppercase;letter-spacing:0.06em}
+.stat.frog{border-left:3px solid var(--accent)}
+
+.frog-banner{background:var(--accent-light);border:1px solid #E8C4B0;border-radius:var(--radius);padding:16px 18px;margin-bottom:20px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .15s}
+.frog-banner:hover{box-shadow:var(--shadow);border-color:#D4A090}
+.frog-icon{font-size:24px;flex-shrink:0}
+.frog-content{flex:1;min-width:0}
+.frog-label{font-size:11px;color:var(--accent);font-weight:500;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+.frog-title{font-weight:500;color:var(--text);font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frog-meta{font-size:12px;color:var(--muted);margin-top:3px}
+.frog-action{font-size:13px;color:var(--accent);font-weight:500;white-space:nowrap}
+
+.tabs{display:flex;gap:2px;background:var(--surface2);border-radius:var(--radius);padding:3px;margin-bottom:20px;width:fit-content}
+.tab{padding:7px 18px;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);border:none;background:transparent;transition:all .15s;font-family:'DM Sans',sans-serif}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.tab:hover:not(.active){color:var(--text)}
+
+.controls{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.search-wrap{position:relative;flex:1;min-width:180px}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+.search-input{width:100%;padding:9px 10px 9px 34px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;transition:border-color .15s}
+.search-input:focus{border-color:var(--accent)}
+.ctrl-select{padding:9px 10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);font-family:'DM Sans',sans-serif;font-size:13px;color:var(--text);outline:none;cursor:pointer;transition:border-color .15s}
+.ctrl-select:focus{border-color:var(--accent)}
+.btn-add{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:9px 18px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;transition:opacity .15s;white-space:nowrap}
+.btn-add:hover{opacity:.88}
+
+.task-list{display:flex;flex-direction:column;gap:8px}
+.task-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;cursor:pointer;transition:border-color .15s,box-shadow .15s;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.task-card:hover{border-color:#C8C0B4;box-shadow:var(--shadow)}
+.task-card.done{opacity:.5}
+.task-top{display:flex;align-items:flex-start;gap:10px}
+.task-check{width:19px;height:19px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;margin-top:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-size:11px;color:transparent}
+.task-check:hover{border-color:var(--green);background:var(--green-light)}
+.task-check.checked{background:var(--green);border-color:var(--green);color:#fff}
+.task-body{flex:1;min-width:0}
+.task-title{font-weight:500;color:var(--text);margin-bottom:6px;font-size:14px}
+.task-card.done .task-title{text-decoration:line-through;color:var(--muted)}
+.task-tags{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.badge{font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;white-space:nowrap}
+.pri-high{background:var(--red-light);color:var(--red)}
+.pri-medium{background:var(--amber-light);color:var(--amber)}
+.pri-low{background:var(--green-light);color:var(--green)}
+.cat-badge{background:var(--surface2);color:var(--muted)}
+.time-badge{background:var(--blue-light);color:var(--blue)}
+.due-badge{background:var(--surface2);color:var(--muted)}
+.due-badge.overdue{background:var(--red-light);color:var(--red)}
+.due-badge.today{background:var(--amber-light);color:var(--amber)}
+.task-actions{display:flex;gap:4px;flex-shrink:0;opacity:0;transition:opacity .15s}
+.task-card:hover .task-actions{opacity:1}
+.icon-btn{width:28px;height:28px;border:none;background:transparent;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:13px;transition:background .15s,color .15s}
+.icon-btn:hover{background:var(--surface2);color:var(--red)}
+.task-note{font-size:12px;color:var(--muted);margin-top:7px;padding-top:7px;border-top:1px solid var(--border);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task-link{font-size:12px;color:var(--accent);margin-top:5px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:none}
+.task-link:hover{text-decoration:underline}
+
+.empty{text-align:center;padding:70px 20px;color:var(--muted)}
+.empty-icon{font-size:44px;margin-bottom:14px}
+.empty h3{font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);margin-bottom:6px}
+.empty p{font-size:13px;line-height:1.6}
+
+/* Planner */
+.planner{display:flex;flex-direction:column;gap:12px}
+.planner-day{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.planner-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.planner-date{font-weight:500;font-size:14px}
+.planner-cap{font-size:12px;color:var(--muted)}
+.cap-bar-wrap{padding:0 16px 10px}
+.cap-bar{height:4px;background:var(--surface2);border-radius:2px;margin-top:8px}
+.cap-fill{height:100%;border-radius:2px;background:var(--green);transition:width .4s ease}
+.cap-fill.warn{background:var(--amber)}
+.cap-fill.over{background:var(--red)}
+.planner-tasks{padding:4px 0}
+.planner-task{padding:9px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+.planner-task:last-child{border-bottom:none}
+.planner-task:hover{background:var(--surface2)}
+.planner-task-title{flex:1;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.planner-task-time{font-size:11px;color:var(--blue);background:var(--blue-light);padding:2px 8px;border-radius:20px;white-space:nowrap}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(26,23,20,0.4);display:flex;align-items:center;justify-content:center;z-index:100;padding:16px;backdrop-filter:blur(2px)}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:580px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 64px rgba(0,0,0,0.18);animation:modalIn .2s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.97) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.modal-header{padding:22px 26px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-title{font-family:'DM Serif Display',serif;font-size:22px}
+.modal-close{width:32px;height:32px;border:none;background:var(--surface2);border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;color:var(--muted);transition:background .15s}
+.modal-close:hover{background:var(--border)}
+.modal-body{padding:22px 26px}
+.form-group{margin-bottom:18px}
+.form-label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;display:block}
+.form-input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:14px;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-textarea{resize:vertical;min-height:78px;line-height:1.5}
+.modal-footer{padding:16px 26px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:10px;position:sticky;bottom:0;background:var(--surface)}
+.footer-left{display:flex;gap:8px}
+.btn-cancel{padding:9px 18px;border:1px solid var(--border);border-radius:var(--radius);background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;color:var(--text);transition:background .15s}
+.btn-cancel:hover{background:var(--surface2)}
+.btn-delete{padding:9px 14px;border:1px solid var(--border);border-radius:var(--radius);background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;color:var(--red);transition:all .15s}
+.btn-delete:hover{background:var(--red-light);border-color:var(--red)}
+.btn-save{padding:9px 22px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.btn-save:hover{opacity:.88}
+
+.ai-section{margin-top:18px;border-top:1px solid var(--border);padding-top:18px}
+.ai-section-title{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+.ai-btn{display:flex;align-items:center;gap:8px;padding:10px 14px;border:1.5px dashed var(--border);border-radius:var(--radius);background:transparent;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);cursor:pointer;width:100%;transition:all .2s}
+.ai-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.ai-result{margin-top:12px;background:var(--surface2);border-radius:var(--radius);padding:14px;animation:fadeIn .2s ease}
+.ai-result-title{font-size:11px;font-weight:500;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.05em}
+.subtask-item{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border)}
+.subtask-item:last-child{border-bottom:none}
+.subtask-num{width:18px;height:18px;border-radius:50%;background:var(--surface);border:1px solid var(--border);font-size:10px;display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0}
+.subtask-text{flex:1;font-size:13px;color:var(--text)}
+.subtask-time{font-size:11px;color:var(--blue);background:var(--blue-light);padding:2px 7px;border-radius:20px}
+.ai-loading{text-align:center;padding:22px;color:var(--muted);font-size:13px}
+.ai-spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;margin-right:8px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+.btn-use-subtasks{margin-top:12px;width:100%;padding:9px;background:var(--green-light);color:var(--green);border:1px solid #B8DDD0;border-radius:var(--radius);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.btn-use-subtasks:hover{opacity:.85}
+.btn-use-subtasks.active{background:var(--green);color:#fff}
+
+/* Drive setup modal */
+.setup-overlay{position:fixed;inset:0;background:rgba(26,23,20,0.5);display:flex;align-items:center;justify-content:center;z-index:200;padding:20px}
+.setup-modal{background:var(--surface);border-radius:16px;max-width:480px;width:100%;padding:36px;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.2)}
+.setup-modal h2{font-family:'DM Serif Display',serif;font-size:26px;margin-bottom:10px}
+.setup-modal p{color:var(--muted);font-size:13px;line-height:1.7;margin-bottom:6px}
+.setup-steps{text-align:left;margin:20px 0;background:var(--surface2);border-radius:var(--radius);padding:16px}
+.setup-step{display:flex;gap:12px;margin-bottom:12px;align-items:flex-start}
+.setup-step:last-child{margin-bottom:0}
+.step-num{width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-text{font-size:13px;color:var(--text);line-height:1.5}
+.step-text strong{color:var(--accent)}
+.btn-setup{background:var(--accent);color:#fff;border:none;border-radius:var(--radius);padding:11px 28px;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:opacity .15s;margin-top:8px}
+.btn-setup:hover{opacity:.88}
+.btn-skip{background:transparent;border:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--muted);cursor:pointer;margin-top:10px;text-decoration:underline}
+
+/* API key input */
+.api-input-wrap{margin-top:16px;text-align:left}
+.api-input-label{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;display:block;text-transform:uppercase;letter-spacing:.05em}
+.api-key-input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-family:monospace;font-size:12px;color:var(--text);background:var(--surface);outline:none}
+.api-key-input:focus{border-color:var(--accent)}
+.api-note{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:10px 16px;border-radius:var(--radius);font-size:13px;z-index:300;animation:toastIn .2s ease;pointer-events:none}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:600px){
+  .form-row{grid-template-columns:1fr}
+  .stats-bar{grid-template-columns:1fr 1fr}
+  .topbar{padding:16px 0 14px}
+  .controls{gap:8px}
+  .app{padding:0 14px 32px}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="logo">Focus<span>.</span></div>
+    <div class="topbar-right">
+      <div class="drive-status" id="driveStatus" onclick="showDriveInfo()">
+        <div class="drive-dot" id="driveDot"></div>
+        <span id="driveLabel">Connecting...</span>
+      </div>
+      <button class="btn-add" onclick="openModal()">+ New task</button>
+    </div>
+  </div>
+  <div id="mainContent"></div>
+</div>
+
+<!-- Task Modal -->
+<div class="overlay" id="taskModal" style="display:none" onclick="if(event.target===this)closeModal()">
+<div class="modal">
+  <div class="modal-header">
+    <div class="modal-title" id="modalTitle">New task</div>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+  </div>
+  <div class="modal-body">
+    <input type="hidden" id="editId">
+    <div class="form-group">
+      <label class="form-label">Title</label>
+      <input class="form-input" id="fTitle" placeholder="What needs to be done?">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Due date</label>
+        <input class="form-input" type="date" id="fDue">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estimated time (hours)</label>
+        <input class="form-input" type="number" id="fTime" placeholder="e.g. 1.5" step="0.5" min="0.5">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Priority</label>
+        <select class="form-input" id="fPriority">
+          <option value="high">High</option>
+          <option value="medium" selected>Medium</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Category</label>
+        <select class="form-input" id="fCategory">
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="Strategic">Strategic</option>
+          <option value="Admin">Admin</option>
+          <option value="Team">Team</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <textarea class="form-input form-textarea" id="fNote" placeholder="Context, details, or anything useful..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Document / Link</label>
+      <input class="form-input" id="fLink" placeholder="https://...">
+    </div>
+    <div class="ai-section">
+      <div class="ai-section-title">AI assistant</div>
+      <button class="ai-btn" onclick="runAIBreakdown()">
+        <span style="font-size:15px">✦</span> Break this task into subtasks with AI
+      </button>
+      <div id="aiResult"></div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <div class="footer-left">
+      <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+      <button class="btn-delete" id="btnDelete" style="display:none" onclick="deleteCurrentTask()">Delete</button>
+    </div>
+    <button class="btn-save" onclick="saveTask()">Save task</button>
+  </div>
+</div>
+</div>
+
+<!-- Setup Modal -->
+<div class="setup-overlay" id="setupModal" style="display:none">
+<div class="setup-modal">
+  <div style="font-size:36px;margin-bottom:14px">🗂</div>
+  <h2>Set up your task manager</h2>
+  <p>Focus stores your tasks in a JSON file on your Google Drive, so they stay in sync across all your devices.</p>
+  <div class="setup-steps">
+    <div class="setup-step">
+      <div class="step-num">1</div>
+      <div class="step-text">Go to <strong>console.anthropic.com</strong> and create a free API key</div>
+    </div>
+    <div class="setup-step">
+      <div class="step-num">2</div>
+      <div class="step-text">Paste it below — it's stored only in your browser (localStorage)</div>
+    </div>
+    <div class="setup-step">
+      <div class="step-num">3</div>
+      <div class="step-text">Your tasks sync to <strong>focus_tasks.json</strong> in your Google Drive automatically</div>
+    </div>
+  </div>
+  <div class="api-input-wrap">
+    <label class="api-input-label">Anthropic API key</label>
+    <input class="api-key-input" id="apiKeyInput" type="password" placeholder="sk-ant-...">
+    <div class="api-note">Your key is stored locally in your browser and never sent anywhere except Anthropic's API.</div>
+  </div>
+  <br>
+  <button class="btn-setup" onclick="saveApiKey()">Connect & start</button>
+  <br>
+  <button class="btn-skip" onclick="skipSetup()">Skip for now — use local storage only</button>
+</div>
+</div>
+
+<script>
+const DRIVE_FILE = 'focus_tasks.json';
+const API_BASE = 'https://api.anthropic.com/v1/messages';
+let tasks = [];
+let currentView = 'tasks';
+let editingId = null;
+let pendingSubtasks = null;
+let subtasksAccepted = false;
+let filterPri = 'all', filterCat = 'all', searchQ = '';
+let apiKey = '';
+let driveEnabled = false;
+
+// --- Init ---
+function init(){
+  apiKey = localStorage.getItem('focus_api_key') || '';
+  const saved = localStorage.getItem('focus_tasks');
+  if(saved){ try{ tasks = JSON.parse(saved); }catch(e){ tasks = getSampleTasks(); } }
+  else { tasks = getSampleTasks(); }
+
+  if(!apiKey){
+    document.getElementById('setupModal').style.display = 'flex';
+    setDriveStatus('error','Not configured');
+    render();
+  } else {
+    driveEnabled = true;
+    loadFromDrive();
+  }
+}
+
+function saveApiKey(){
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if(!key){ alert('Please enter your API key'); return; }
+  localStorage.setItem('focus_api_key', key);
+  apiKey = key;
+  driveEnabled = true;
+  document.getElementById('setupModal').style.display = 'none';
+  loadFromDrive();
+}
+
+function skipSetup(){
+  document.getElementById('setupModal').style.display = 'none';
+  setDriveStatus('error','Local only');
+  render();
+}
+
+function showDriveInfo(){
+  if(!apiKey){ document.getElementById('setupModal').style.display = 'flex'; }
+}
+
+// --- Drive sync via Claude API + MCP ---
+async function callClaude(system, userMsg, mcpServers, maxTokens){
+  const body = {
+    model:'claude-sonnet-4-20250514',
+    max_tokens: maxTokens || 1000,
+    system, messages:[{role:'user',content:userMsg}]
+  };
+  if(mcpServers) body.mcp_servers = mcpServers;
+  const resp = await fetch(API_BASE,{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify(body)
+  });
+  if(!resp.ok) throw new Error(`API error ${resp.status}`);
+  return await resp.json();
+}
+
+const DRIVE_MCP = [{type:'url',url:'https://drivemcp.googleapis.com/mcp/v1',name:'gdrive'}];
+
+async function loadFromDrive(){
+  if(!driveEnabled){ render(); return; }
+  setDriveStatus('syncing','Syncing...');
+  try{
+    const data = await callClaude(
+      `You are a Google Drive file utility. Search for a file named "${DRIVE_FILE}" in the user's Drive. If found, return ONLY its raw text content with no explanation. If not found, return exactly: NOT_FOUND`,
+      `Find and return the full content of "${DRIVE_FILE}" from my Google Drive.`,
+      DRIVE_MCP, 4000
+    );
+    const toolResults = (data.content||[]).filter(b=>b.type==='mcp_tool_result').map(b=>b.content?.[0]?.text||'').join('\n');
+    const textBlocks = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    const combined = (toolResults + textBlocks).trim();
+    if(!combined || combined.includes('NOT_FOUND')){
+      await saveToDrive(true);
+    } else {
+      try{
+        const match = combined.match(/\[[\s\S]*\]/);
+        if(match) tasks = JSON.parse(match[0]);
+      }catch(e){}
+      saveLocal();
+    }
+    setDriveStatus('connected','Drive synced');
+  }catch(e){
+    console.warn('Drive load failed:', e);
+    setDriveStatus('error','Drive unavailable');
+  }
+  render();
+}
+
+async function saveToDrive(silent){
+  if(!driveEnabled) return;
+  if(!silent) setDriveStatus('syncing','Saving...');
+  saveLocal();
+  try{
+    const content = JSON.stringify(tasks, null, 2);
+    await callClaude(
+      `You are a Google Drive file utility. Save the provided JSON content to a file named "${DRIVE_FILE}" in the user's Google Drive. If the file exists, overwrite it. If not, create it. Confirm when done.`,
+      `Save this content to "${DRIVE_FILE}":\n${content}`,
+      DRIVE_MCP, 300
+    );
+    if(!silent) setDriveStatus('connected','Drive synced');
+  }catch(e){
+    if(!silent) setDriveStatus('error','Sync failed');
+  }
+}
+
+function saveLocal(){ localStorage.setItem('focus_tasks', JSON.stringify(tasks)); }
+
+function setDriveStatus(state, label){
+  const dot = document.getElementById('driveDot');
+  const lbl = document.getElementById('driveLabel');
+  dot.className = 'drive-dot';
+  if(state==='connected') dot.classList.add('connected');
+  if(state==='syncing') dot.classList.add('syncing');
+  if(state==='error') dot.classList.add('error');
+  lbl.textContent = label;
+}
+
+// --- Sample tasks ---
+function getSampleTasks(){
+  const add = n=>{ const d=new Date(); d.setDate(d.getDate()+n); return d.toISOString().split('T')[0]; };
+  return [
+    {id:uid(),title:'Review Q2 service portfolio proposals',priority:'high',category:'Strategic',due:add(1),time:2,note:'Focus on cloud and SAP sections',link:'',done:false,created:Date.now()},
+    {id:uid(),title:'Prepare leadership hiring shortlist',priority:'high',category:'Team',due:add(2),time:1.5,note:'Three candidates pending review',link:'',done:false,created:Date.now()-1000},
+    {id:uid(),title:'Update One Team / Connected Delivery status deck',priority:'medium',category:'Work',due:add(3),time:1,note:'EMEA and APAC delivery center updates needed',link:'',done:false,created:Date.now()-2000},
+    {id:uid(),title:'Review Smith+Nephew sprint progress',priority:'medium',category:'Work',due:add(0),time:0.5,note:'Vulnerability remediation sprint check',link:'',done:false,created:Date.now()-3000},
+    {id:uid(),title:'Cloud sales enablement training prep',priority:'low',category:'Work',due:add(5),time:2,note:'Update StefaniniGroup EMEA MES HCI deck',link:'',done:false,created:Date.now()-4000},
+  ];
+}
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+
+// --- Frog logic ---
+function getFrog(){
+  const pending = tasks.filter(t=>!t.done);
+  if(!pending.length) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  return pending.map(t=>{
+    const daysLeft = t.due ? Math.ceil((new Date(t.due+' 00:00:00')-today)/86400000) : 99;
+    const p = t.priority==='high'?3:t.priority==='medium'?2:1;
+    const u = daysLeft<=0?10:daysLeft<=1?7:daysLeft<=3?4:1;
+    return {...t, score: p*3+u+(t.time||1)};
+  }).sort((a,b)=>b.score-a.score)[0];
+}
+
+// --- Render ---
+function render(){
+  const mc = document.getElementById('mainContent');
+  const stats = getStats();
+  const frog = getFrog();
+
+  let html = `<div class="stats-bar">
+    <div class="stat frog"><div class="stat-num">${stats.today}</div><div class="stat-label">Due today</div></div>
+    <div class="stat"><div class="stat-num">${stats.pending}</div><div class="stat-label">Open tasks</div></div>
+    <div class="stat"><div class="stat-num">${stats.hrs}h</div><div class="stat-label">Work to do</div></div>
+    <div class="stat"><div class="stat-num">${stats.done}</div><div class="stat-label">Completed</div></div>
+  </div>`;
+
+  if(frog && currentView==='tasks'){
+    const due = frog.due ? formatDue(frog.due) : '';
+    html += `<div class="frog-banner" onclick="editTask('${frog.id}')">
+      <div class="frog-icon">🐸</div>
+      <div class="frog-content">
+        <div class="frog-label">Eat the frog — tackle this first</div>
+        <div class="frog-title">${esc(frog.title)}</div>
+        <div class="frog-meta">${esc(frog.category)} · ${frog.time||'?'}h estimated${due?' · '+due:''}</div>
+      </div>
+      <div class="frog-action">Open →</div>
+    </div>`;
+  }
+
+  html += `<div class="tabs">
+    <button class="tab ${currentView==='tasks'?'active':''}" onclick="switchView('tasks')">All tasks</button>
+    <button class="tab ${currentView==='planner'?'active':''}" onclick="switchView('planner')">Time planner</button>
+  </div>`;
+
+  if(currentView==='tasks') html += renderTasks();
+  else html += renderPlanner();
+
+  mc.innerHTML = html;
+}
+
+function renderTasks(){
+  let html = `<div class="controls">
+    <div class="search-wrap">
+      <svg class="search-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input class="search-input" placeholder="Search tasks..." value="${esc(searchQ)}" oninput="searchQ=this.value;render()">
+    </div>
+    <select class="ctrl-select" onchange="filterPri=this.value;render()">
+      <option value="all" ${filterPri==='all'?'selected':''}>All priorities</option>
+      <option value="high" ${filterPri==='high'?'selected':''}>High</option>
+      <option value="medium" ${filterPri==='medium'?'selected':''}>Medium</option>
+      <option value="low" ${filterPri==='low'?'selected':''}>Low</option>
+    </select>
+    <select class="ctrl-select" onchange="filterCat=this.value;render()">
+      <option value="all" ${filterCat==='all'?'selected':''}>All categories</option>
+      ${['Work','Personal','Strategic','Admin','Team','Other'].map(c=>`<option value="${c}" ${filterCat===c?'selected':''}>${c}</option>`).join('')}
+    </select>
+  </div>`;
+
+  let filtered = tasks.filter(t=>{
+    if(filterPri!=='all'&&t.priority!==filterPri) return false;
+    if(filterCat!=='all'&&t.category!==filterCat) return false;
+    if(searchQ&&!t.title.toLowerCase().includes(searchQ.toLowerCase())&&!(t.note||'').toLowerCase().includes(searchQ.toLowerCase())) return false;
+    return true;
+  }).sort((a,b)=>{
+    if(a.done!==b.done) return a.done?1:-1;
+    const ps={high:0,medium:1,low:2};
+    if(ps[a.priority]!==ps[b.priority]) return ps[a.priority]-ps[b.priority];
+    if(a.due&&b.due) return new Date(a.due)-new Date(b.due);
+    if(a.due) return -1; if(b.due) return 1;
+    return 0;
+  });
+
+  if(!filtered.length){
+    return html + `<div class="empty"><div class="empty-icon">📋</div><h3>No tasks here</h3><p>Add a new task or adjust your filters to see tasks.</p></div>`;
+  }
+
+  html += `<div class="task-list">`;
+  filtered.forEach(t=>{
+    const due = t.due ? formatDue(t.due) : '';
+    const dueClass = isDueToday(t.due)?'today':isOverdue(t.due)&&!t.done?'overdue':'';
+    html += `<div class="task-card ${t.done?'done':''}" onclick="editTask('${t.id}')">
+      <div class="task-top">
+        <div class="task-check ${t.done?'checked':''}" onclick="event.stopPropagation();toggleDone('${t.id}')" title="${t.done?'Mark incomplete':'Mark complete'}">${t.done?'✓':''}</div>
+        <div class="task-body">
+          <div class="task-title">${esc(t.title)}</div>
+          <div class="task-tags">
+            <span class="badge pri-${t.priority}">${t.priority}</span>
+            <span class="badge cat-badge">${esc(t.category)}</span>
+            ${t.time?`<span class="badge time-badge">${t.time}h</span>`:''}
+            ${due?`<span class="badge due-badge ${dueClass}">${due}</span>`:''}
+          </div>
+          ${t.note?`<div class="task-note">📝 ${esc(t.note)}</div>`:''}
+          ${t.link?`<a class="task-link" href="${esc(t.link)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">🔗 ${esc(t.link.replace(/^https?:\/\//,'').split('/')[0])}</a>`:''}
+        </div>
+        <div class="task-actions">
+          <button class="icon-btn" onclick="event.stopPropagation();quickDelete('${t.id}')" title="Delete">✕</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  return html + `</div>`;
+}
+
+function renderPlanner(){
+  const pending = tasks.filter(t=>!t.done);
+  const withDue = pending.filter(t=>t.due).sort((a,b)=>new Date(a.due)-new Date(b.due));
+  const noDue = pending.filter(t=>!t.due);
+  const byDay = {};
+  withDue.forEach(t=>{ if(!byDay[t.due]) byDay[t.due]=[]; byDay[t.due].push(t); });
+  const focusHours = 8;
+
+  if(!withDue.length&&!noDue.length){
+    return `<div class="empty"><div class="empty-icon">🗓</div><h3>Nothing planned yet</h3><p>Add due dates to your tasks to see them in the time planner.</p></div>`;
+  }
+
+  let html = `<div class="planner">`;
+  Object.keys(byDay).sort().forEach(day=>{
+    const dayTasks = byDay[day];
+    const total = Math.round(dayTasks.reduce((s,t)=>s+(t.time||0),0)*10)/10;
+    const pct = Math.min(100, Math.round(total/focusHours*100));
+    const fillClass = pct>100?'over':pct>75?'warn':'';
+    html += `<div class="planner-day">
+      <div class="planner-header">
+        <div class="planner-date">${formatDayLabel(day)}</div>
+        <div class="planner-cap">${total}h of ${focusHours}h · ${pct}% capacity</div>
+      </div>
+      <div class="cap-bar-wrap"><div class="cap-bar"><div class="cap-fill ${fillClass}" style="width:${pct}%"></div></div></div>
+      <div class="planner-tasks">
+        ${dayTasks.map(t=>`<div class="planner-task" onclick="editTask('${t.id}')">
+          <span class="badge pri-${t.priority}">${t.priority}</span>
+          <span class="planner-task-title">${esc(t.title)}</span>
+          ${t.time?`<span class="planner-task-time">${t.time}h</span>`:''}
+        </div>`).join('')}
+      </div>
+    </div>`;
+  });
+  if(noDue.length){
+    html += `<div class="planner-day">
+      <div class="planner-header">
+        <div class="planner-date" style="color:var(--muted)">No due date</div>
+        <div class="planner-cap">${noDue.length} task${noDue.length!==1?'s':''} · add due dates to schedule</div>
+      </div>
+      <div class="planner-tasks">${noDue.map(t=>`<div class="planner-task" onclick="editTask('${t.id}')">
+        <span class="badge pri-${t.priority}">${t.priority}</span>
+        <span class="planner-task-title">${esc(t.title)}</span>
+        ${t.time?`<span class="planner-task-time">${t.time}h</span>`:''}
+      </div>`).join('')}</div>
+    </div>`;
+  }
+  return html + `</div>`;
+}
+
+// --- Modal ---
+function openModal(task){
+  editingId = task ? task.id : null;
+  pendingSubtasks = null;
+  subtasksAccepted = false;
+  document.getElementById('modalTitle').textContent = task ? 'Edit task' : 'New task';
+  document.getElementById('fTitle').value = task?.title || '';
+  document.getElementById('fDue').value = task?.due || '';
+  document.getElementById('fTime').value = task?.time || '';
+  document.getElementById('fPriority').value = task?.priority || 'medium';
+  document.getElementById('fCategory').value = task?.category || 'Work';
+  document.getElementById('fNote').value = task?.note || '';
+  document.getElementById('fLink').value = task?.link || '';
+  document.getElementById('aiResult').innerHTML = '';
+  document.getElementById('btnDelete').style.display = task ? 'block' : 'none';
+  document.getElementById('taskModal').style.display = 'flex';
+  setTimeout(()=>document.getElementById('fTitle').focus(), 100);
+}
+
+function closeModal(){ document.getElementById('taskModal').style.display = 'none'; }
+function editTask(id){ const t=tasks.find(t=>t.id===id); if(t) openModal(t); }
+
+function saveTask(){
+  const title = document.getElementById('fTitle').value.trim();
+  if(!title){ document.getElementById('fTitle').focus(); return; }
+  const taskData = {
+    title,
+    due: document.getElementById('fDue').value,
+    time: parseFloat(document.getElementById('fTime').value) || 0,
+    priority: document.getElementById('fPriority').value,
+    category: document.getElementById('fCategory').value,
+    note: document.getElementById('fNote').value.trim(),
+    link: document.getElementById('fLink').value.trim(),
+    done: false
+  };
+  if(editingId){
+    const idx = tasks.findIndex(t=>t.id===editingId);
+    if(idx>=0) tasks[idx] = {...tasks[idx], ...taskData};
+  } else {
+    tasks.unshift({id:uid(), ...taskData, created:Date.now()});
+  }
+  if(subtasksAccepted && pendingSubtasks){
+    pendingSubtasks.forEach(s=>{
+      tasks.push({id:uid(), ...taskData, title:s.title, time:s.time||0.5, note:`Subtask of: ${title}`, created:Date.now()});
+    });
+  }
+  closeModal();
+  render();
+  saveToDrive();
+  showToast(editingId ? 'Task updated' : 'Task added');
+}
+
+function toggleDone(id){
+  const t = tasks.find(t=>t.id===id);
+  if(t){ t.done=!t.done; render(); saveToDrive(); showToast(t.done?'Marked complete':'Marked open'); }
+}
+
+function quickDelete(id){
+  tasks = tasks.filter(t=>t.id!==id);
+  render(); saveToDrive(); showToast('Task deleted');
+}
+
+function deleteCurrentTask(){
+  if(!editingId) return;
+  if(!confirm('Delete this task?')) return;
+  tasks = tasks.filter(t=>t.id!==editingId);
+  closeModal(); render(); saveToDrive(); showToast('Task deleted');
+}
+
+// --- AI breakdown ---
+async function runAIBreakdown(){
+  const title = document.getElementById('fTitle').value.trim();
+  if(!title){ alert('Please enter a task title first.'); return; }
+  if(!apiKey){ alert('API key required for AI features. Click the Drive status to configure.'); return; }
+  const res = document.getElementById('aiResult');
+  res.innerHTML = `<div class="ai-loading"><span class="ai-spinner"></span>Analysing task with AI...</div>`;
+  try{
+    const data = await callClaude(
+      'You are a task management assistant. Break down the given task into 3-6 concrete, actionable subtasks. Return ONLY a valid JSON array where each object has "title" (string) and "time" (number, estimated hours as a decimal like 0.5 or 1). No markdown fences, no explanation, just the raw JSON array.',
+      `Break down this task into subtasks: "${title}"`,
+      null, 800
+    );
+    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('').replace(/```json|```/g,'').trim();
+    const subtasks = JSON.parse(text);
+    pendingSubtasks = subtasks;
+    res.innerHTML = `<div class="ai-result">
+      <div class="ai-result-title">✦ Suggested subtasks</div>
+      ${subtasks.map((s,i)=>`<div class="subtask-item">
+        <div class="subtask-num">${i+1}</div>
+        <div class="subtask-text">${esc(s.title)}</div>
+        <div class="subtask-time">${s.time}h</div>
+      </div>`).join('')}
+      <button class="btn-use-subtasks" id="acceptBtn" onclick="toggleAcceptSubtasks(this)">Add these subtasks when saving</button>
+    </div>`;
+  }catch(e){
+    res.innerHTML = `<div style="color:var(--red);font-size:13px;padding:10px 0">Could not generate subtasks. Check your API key and connection.</div>`;
+  }
+}
+
+function toggleAcceptSubtasks(btn){
+  subtasksAccepted = !subtasksAccepted;
+  btn.textContent = subtasksAccepted ? '✓ Subtasks will be added on save' : 'Add these subtasks when saving';
+  btn.classList.toggle('active', subtasksAccepted);
+}
+
+// --- Utils ---
+function getStats(){
+  const today = new Date().toISOString().split('T')[0];
+  const pending = tasks.filter(t=>!t.done);
+  return {
+    today: tasks.filter(t=>!t.done&&t.due===today).length,
+    pending: pending.length,
+    hrs: Math.round(pending.reduce((s,t)=>s+(t.time||0),0)*10)/10,
+    done: tasks.filter(t=>t.done).length
+  };
+}
+
+function formatDue(due){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(due+' 00:00:00');
+  const diff = Math.ceil((d-today)/86400000);
+  if(diff===0) return 'Today';
+  if(diff===1) return 'Tomorrow';
+  if(diff===-1) return 'Yesterday';
+  if(diff<-1) return `${Math.abs(diff)}d overdue`;
+  if(diff<=7) return `In ${diff}d`;
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+}
+
+function formatDayLabel(due){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(due+' 00:00:00');
+  const diff = Math.ceil((d-today)/86400000);
+  if(diff===0) return 'Today';
+  if(diff===1) return 'Tomorrow';
+  if(diff===-1) return 'Yesterday';
+  return d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'short'});
+}
+
+function isDueToday(due){ return due===new Date().toISOString().split('T')[0]; }
+function isOverdue(due){ if(!due) return false; const today=new Date(); today.setHours(0,0,0,0); return new Date(due+' 00:00:00')<today; }
+function esc(s){ if(!s) return ''; return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function switchView(v){ currentView=v; render(); }
+
+function showToast(msg){
+  const t = document.createElement('div');
+  t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(), 2200);
+}
+
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+
+init();
+</script>
+</body>
+</html>
